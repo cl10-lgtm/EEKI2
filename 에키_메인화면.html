@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>에키 — 일본 지하철 길잡이</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:     #2C3E6B;
+      --accent:      #4F72FF;
+      --accent-lt:   #E8EDFF;
+      --warn:        #FF9500;
+      --danger:      #FF3B30;
+      --success:     #34C759;
+      --bg:          #F2F3F7;
+      --card:        #FFFFFF;
+      --text-1:      #1C1C1E;
+      --text-2:      #3A3A3C;
+      --text-3:      #8E8E93;
+      --text-4:      #AEAEB2;
+      --border:      #E5E5EA;
+      --nav-bg:      rgba(255,255,255,0.95);
+      --sheet-bg:    #fff;
+      --input-bg:    #F2F3F7;
+      --city-a:      #1a2d5a;
+      --city-b:      #2C3E6B;
+      --city-c:      #3a5fc0;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    [data-theme="dark"] {
+      --bg:       #0E0E10;
+      --card:     #1C1C1E;
+      --text-1:   #F5F5F7;
+      --text-2:   #D1D1D6;
+      --text-3:   #8E8E93;
+      --text-4:   #48484A;
+      --border:   #2C2C2E;
+      --nav-bg:   rgba(28,28,30,0.97);
+      --sheet-bg: #1C1C1E;
+      --input-bg: #2C2C2E;
+      --accent-lt:#1a2352;
+    }
+
+    html { height: 100%; }
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text-1);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background .3s, color .3s;
+    }
+
+    .phone-frame {
+      max-width: 390px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--bg);
+      position: relative;
+      box-shadow: 0 0 80px rgba(0,0,0,.18);
+      transition: background .3s;
+    }
+    @media (min-width:600px) {
+      body { background: #C5CAD8; padding: 40px 0; }
+      [data-theme="dark"] body { background: #060608; }
+      .phone-frame { min-height: auto; border-radius: 44px; overflow: hidden; }
+    }
+
+    .scroll-area { padding-bottom: calc(80px + var(--safe-bottom)); overflow-y: auto; }
+
+    /* ── ONBOARDING ── */
+    .onboarding-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(160deg, var(--city-a) 0%, var(--city-b) 50%, var(--city-c) 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding: 0 24px calc(48px + var(--safe-bottom));
+      max-width: 390px; margin: 0 auto;
+      transition: background .6s;
+    }
+    .onboarding-overlay.hidden { display: none; }
+
+    .ob-top {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding-top: 60px;
+    }
+    .ob-logo-mark {
+      width: 72px; height: 72px; background: #fff; border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: 900; color: #1a2d5a;
+      margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    }
+    .ob-title { font-size: 32px; font-weight: 900; color: #fff; letter-spacing: -1px; margin-bottom: 8px; }
+    .ob-title-jp { font-size: 14px; color: rgba(255,255,255,.5); margin-bottom: 24px; }
+    .ob-desc { font-size: 16px; color: rgba(255,255,255,.8); line-height: 1.6; max-width: 300px; }
+    .ob-train-anim { width: 100%; height: 80px; position: relative; margin: 32px 0; overflow: hidden; }
+    .ob-train { position: absolute; font-size: 42px; top: 50%; transform: translateY(-50%); animation: trainRide 3s linear infinite; }
+    @keyframes trainRide { from{left:-60px} to{left:calc(100% + 10px)} }
+    .ob-track { position: absolute; bottom: 10px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; }
+
+    .ob-choice-section { width: 100%; }
+    .ob-choice-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.5); text-align: center; letter-spacing: 1px; margin-bottom: 14px; }
+    .ob-btn {
+      width: 100%; padding: 18px 20px; border-radius: 18px; border: none;
+      cursor: pointer; display: flex; align-items: center; gap: 14px;
+      text-align: left; transition: transform .15s; margin-bottom: 12px;
+    }
+    .ob-btn:active { transform: scale(.97); }
+    .ob-btn-primary { background: #fff; }
+    .ob-btn-secondary { background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.2); }
+    .ob-btn-icon {
+      width: 44px; height: 44px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .ob-btn-primary .ob-btn-icon { background: #E8EDFF; }
+    .ob-btn-secondary .ob-btn-icon { background: rgba(255,255,255,.15); }
+    .ob-btn-text { flex: 1; }
+    .ob-btn-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .ob-btn-primary .ob-btn-title { color: #1C1C1E; }
+    .ob-btn-secondary .ob-btn-title { color: #fff; }
+    .ob-btn-sub { font-size: 12px; }
+    .ob-btn-primary .ob-btn-sub { color: #8E8E93; }
+    .ob-btn-secondary .ob-btn-sub { color: rgba(255,255,255,.6); }
+    .ob-btn-arrow { font-size: 18px; opacity: .4; }
+    .ob-btn-primary .ob-btn-arrow { color: #1C1C1E; }
+    .ob-btn-secondary .ob-btn-arrow { color: #fff; }
+    .ob-auto-label { text-align: center; font-size: 12px; color: rgba(255,255,255,.4); margin-top: 4px; }
+    .ob-auto-bar { width: 100%; height: 3px; background: rgba(255,255,255,.15); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .ob-auto-progress { height: 100%; background: rgba(255,255,255,.5); border-radius: 2px; width: 0%; animation: autoProgress 5s linear forwards; }
+    @keyframes autoProgress { from{width:0%} to{width:100%} }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 56px 20px 32px;
+      position: relative; overflow: hidden;
+      transition: background .6s;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='400' height='260' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='340' cy='40' r='120' fill='rgba(255,255,255,0.04)'/%3E%3Ccircle cx='360' cy='200' r='80' fill='rgba(255,255,255,0.03)'/%3E%3Ccircle cx='20' cy='200' r='100' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E") no-repeat center/cover;
+    }
+
+    .hero-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; position: relative;
+    }
+    .hero-logo { display: flex; align-items: center; gap: 8px; }
+    .logo-mark {
+      width: 32px; height: 32px; background: #fff; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 900; color: var(--primary); letter-spacing: -1px;
+    }
+    .logo-text { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.5px; }
+    .logo-jp   { font-size: 11px; color: rgba(255,255,255,.55); }
+    .hero-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,.15); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 17px; transition: background .15s;
+    }
+    .icon-btn:active { background: rgba(255,255,255,.28); }
+
+    .city-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600;
+      color: rgba(255,255,255,.9); margin-bottom: 20px; cursor: pointer;
+      transition: background .15s; position: relative;
+    }
+    .city-pill:active { background: rgba(255,255,255,.25); }
+    .dot-live { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .hero-headline { font-size: 22px; font-weight: 800; color: #fff; line-height: 1.35; margin-bottom: 6px; position: relative; }
+    .hero-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 20px; position: relative; }
+
+    .search-bar {
+      background: var(--card); border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2); overflow: hidden; position: relative;
+    }
+    .search-row {
+      display: flex; align-items: center; padding: 14px 16px; gap: 10px;
+      cursor: pointer; transition: background .15s;
+    }
+    .search-row:active { background: var(--input-bg); }
+    .search-row + .search-row { border-top: 1px solid var(--border); }
+    .search-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .search-icon.origin { background: #E8EDFF; }
+    .search-icon.dest   { background: #FFE8E8; }
+    .search-text { flex: 1; font-size: 15px; color: var(--text-3); }
+    .search-text.filled { color: var(--text-1); font-weight: 600; }
+    .search-swap-btn {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--accent-lt);
+      border: 2px solid var(--card); display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; color: var(--accent);
+      box-shadow: 0 2px 8px rgba(79,114,255,.2); z-index: 2;
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      transition: transform .2s;
+    }
+    .search-swap-btn:active { transform: translateY(-50%) rotate(180deg); }
+    .search-go-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--accent), #6B8AFF);
+      border: none; color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .search-go-btn:active { opacity: .85; }
+
+    /* ── CONTENT ── */
+    .content { padding: 20px 16px 0; }
+    .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .sec-title { font-size: 16px; font-weight: 700; color: var(--text-1); }
+    .sec-more  { font-size: 13px; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+    .quick-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 24px; }
+    .quick-item {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      cursor: pointer; padding: 4px 0; border-radius: 12px;
+      transition: transform .15s, background .15s;
+    }
+    .quick-item:active { transform: scale(.93); background: rgba(0,0,0,.04); }
+    .quick-icon { width: 58px; height: 58px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 24px; position: relative; }
+    .quick-icon.map  { background: linear-gradient(135deg,#667EEA,#764BA2); }
+    .quick-icon.talk { background: linear-gradient(135deg,#F093FB,#F5576C); }
+    .quick-icon.atm  { background: linear-gradient(135deg,#4FACFE,#00F2FE); }
+    .quick-icon.card { background: linear-gradient(135deg,#43E97B,#38F9D7); }
+    .badge-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: var(--danger); border-radius: 50%; border: 2px solid var(--bg); }
+    .quick-label { font-size: 11px; font-weight: 600; color: var(--text-2); text-align: center; line-height: 1.3; }
+
+    /* payment card */
+    .payment-card {
+      background: linear-gradient(135deg,#1a2d5a 0%,#2C3E6B 60%,#3a56a0 100%);
+      border-radius: 20px; padding: 20px; margin-bottom: 24px;
+      position: relative; overflow: hidden; cursor: pointer;
+      transition: background .6s;
+    }
+    .payment-card::before { content:''; position:absolute; right:-30px; top:-30px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,.06); }
+    .payment-card::after  { content:''; position:absolute; right:30px; bottom:-50px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.04); }
+    .card-chip-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .card-type-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.15); border-radius:10px; padding:5px 10px; }
+    .card-type-name { font-size:12px; font-weight:700; color:#fff; }
+    .card-status-dot { width:6px; height:6px; border-radius:50%; }
+    .card-status-dot.warn { background:var(--warn); }
+    .card-nfc-label { font-size:10px; font-weight:600; color:rgba(255,255,255,.5); letter-spacing:1px; }
+    .card-balance-label { font-size:11px; color:rgba(255,255,255,.55); margin-bottom:3px; }
+    .card-balance-row { display:flex; align-items:flex-end; gap:6px; margin-bottom:6px; }
+    .card-balance { font-size:34px; font-weight:800; color:#fff; letter-spacing:-1px; line-height:1; }
+    .card-currency { font-size:16px; font-weight:700; color:rgba(255,255,255,.7); margin-bottom:4px; }
+    .card-alert-bar { background:rgba(255,149,0,.2); border:1px solid rgba(255,149,0,.4); border-radius:10px; padding:8px 12px; display:flex; align-items:center; gap:8px; margin-top:14px; }
+    .card-alert-icon { font-size:14px; }
+    .card-alert-text { flex:1; font-size:12px; color:rgba(255,255,255,.9); font-weight:500; }
+    .card-alert-btn { background:var(--warn); border:none; border-radius:8px; color:#fff; font-size:11px; font-weight:700; padding:5px 10px; cursor:pointer; white-space:nowrap; }
+    .card-footer-row { display:flex; align-items:center; justify-content:space-between; margin-top:14px; }
+    .card-updated { font-size:11px; color:rgba(255,255,255,.4); }
+    .card-charge-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); border-radius:10px; color:#fff; font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; }
+
+    /* recent routes */
+    .route-list { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+    .route-item {
+      background:var(--card); border-radius:16px; padding:16px;
+      display:flex; align-items:center; gap:14px;
+      cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,.05);
+      transition:transform .15s, background .3s;
+    }
+    .route-item:active { transform:scale(.98); }
+    .route-icon { width:42px; height:42px; border-radius:13px; background:var(--accent-lt); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .route-info { flex:1; min-width:0; }
+    .route-path { font-size:14px; font-weight:700; color:var(--text-1); display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+    .route-arrow { font-size:11px; color:var(--text-4); }
+    .route-meta { font-size:12px; color:var(--text-3); display:flex; align-items:center; gap:8px; }
+    .route-meta-dot { width:3px; height:3px; border-radius:50%; background:var(--text-4); }
+    .route-fare { font-size:14px; font-weight:700; color:var(--accent); flex-shrink:0; }
+
+    /* offline chips */
+    .offline-section { margin-bottom:24px; }
+    .offline-list { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+    .offline-list::-webkit-scrollbar { display:none; }
+    .offline-chip { display:flex; flex-direction:column; gap:6px; background:var(--card); border-radius:16px; padding:14px; min-width:120px; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,.05); transition:transform .15s,background .3s; flex-shrink:0; }
+    .offline-chip:active { transform:scale(.96); }
+    .offline-chip-icon { font-size:22px; }
+    .offline-chip-name { font-size:13px; font-weight:700; color:var(--text-1); }
+    .offline-chip-size { font-size:11px; color:var(--text-3); }
+    .offline-status { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:3px 8px; border-radius:8px; }
+    .offline-status.saved   { background:#E8F9EE; color:#1a7f37; }
+    .offline-status.missing { background:#FFF3E0; color:#e65100; }
+    .offline-add-chip { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:var(--input-bg); border-radius:16px; padding:14px; min-width:100px; cursor:pointer; flex-shrink:0; border:1.5px dashed var(--text-4); }
+    .offline-add-chip .add-icon { font-size:20px; color:var(--text-3); }
+    .offline-add-chip .add-text { font-size:11px; font-weight:600; color:var(--text-3); text-align:center; }
+
+    /* tip */
+    .tip-banner { background:var(--accent-lt); border-radius:16px; padding:16px; display:flex; align-items:flex-start; gap:12px; margin-bottom:24px; cursor:pointer; }
+    .tip-icon { font-size:24px; flex-shrink:0; margin-top:2px; }
+    .tip-title { font-size:13px; font-weight:700; color:#2C3E6B; margin-bottom:4px; }
+    [data-theme="dark"] .tip-title { color:#8AA4FF; }
+    .tip-desc { font-size:12px; color:#5566aa; line-height:1.5; }
+    [data-theme="dark"] .tip-desc { color:#7788CC; }
+    .tip-close { margin-left:auto; font-size:16px; color:var(--text-4); cursor:pointer; flex-shrink:0; padding:2px; }
+
+    /* bottom nav */
+    .bottom-nav {
+      position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+      width:100%; max-width:390px; background:var(--nav-bg);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      border-top:1px solid var(--border);
+      padding:10px 20px calc(10px + var(--safe-bottom));
+      display:flex; align-items:center; justify-content:space-around;
+      z-index:100; transition:background .3s, border-color .3s;
+    }
+    .nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:4px 12px; border-radius:12px; transition:background .15s; min-width:56px; }
+    .nav-item:active { background:rgba(0,0,0,.05); }
+    .nav-icon { font-size:22px; line-height:1; }
+    .nav-label { font-size:10px; font-weight:600; color:var(--text-4); }
+    .nav-item.active .nav-label { color:var(--accent); }
+    .nav-center-btn { width:54px; height:54px; background:linear-gradient(135deg,var(--accent),#6B8AFF); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; box-shadow:0 6px 20px rgba(79,114,255,.4); transition:transform .15s; margin-top:-18px; flex-shrink:0; }
+    .nav-center-btn:active { transform:scale(.93); }
+
+    /* ── SHARED MODAL ── */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.5); z-index:200;
+      align-items:flex-end; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal-sheet { background:var(--sheet-bg); border-radius:28px 28px 0 0; width:100%; max-width:390px; padding:0 0 calc(20px + var(--safe-bottom)); animation:slideUp .3s ease; transition:background .3s; }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:12px auto 0; }
+    .modal-header { padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+    .modal-title { font-size:18px; font-weight:800; color:var(--text-1); }
+    .modal-close-btn { width:30px; height:30px; background:var(--input-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; color:var(--text-3); border:none; }
+    .modal-sub { font-size:12px; color:var(--text-3); padding:4px 20px 16px; }
+
+    /* ── CITY SELECTOR ── */
+    .city-sheet { padding-bottom: calc(28px + var(--safe-bottom)); }
+    .city-item {
+      display:flex; align-items:center; gap:14px;
+      padding:16px 20px; cursor:pointer; transition:background .15s;
+      border-bottom:1px solid var(--border);
+    }
+    .city-item:last-child { border-bottom:none; }
+    .city-item:active { background:var(--input-bg); }
+    .city-item.active { background:var(--accent-lt); }
+    .city-emoji { font-size:32px; flex-shrink:0; }
+    .city-info { flex:1; }
+    .city-name { font-size:16px; font-weight:700; color:var(--text-1); margin-bottom:3px; }
+    .city-desc { font-size:12px; color:var(--text-3); }
+    .city-check { font-size:20px; color:var(--accent); opacity:0; transition:opacity .15s; }
+    .city-item.active .city-check { opacity:1; }
+    .city-line-chips { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+    .city-line-chip { font-size:10px; font-weight:600; padding:2px 7px; border-radius:6px; background:var(--border); color:var(--text-3); }
+
+    /* ── TALK CARD ── */
+    .cat-tabs { display:flex; gap:8px; padding:0 20px 16px; overflow-x:auto; scrollbar-width:none; }
+    .cat-tabs::-webkit-scrollbar { display:none; }
+    .cat-tab { display:inline-flex; align-items:center; gap:5px; background:var(--input-bg); border-radius:12px; padding:8px 14px; font-size:13px; font-weight:600; color:var(--text-2); cursor:pointer; border:1.5px solid transparent; white-space:nowrap; transition:all .15s; flex-shrink:0; }
+    .cat-tab.active { background:var(--accent-lt); color:var(--accent); border-color:var(--accent); }
+    .card-list { display:flex; flex-direction:column; gap:10px; padding:0 20px; max-height:300px; overflow-y:auto; }
+    .talk-card { background:var(--input-bg); border-radius:16px; padding:16px; cursor:pointer; transition:all .15s; border:1.5px solid transparent; }
+    .talk-card:active { background:var(--accent-lt); border-color:var(--accent); }
+    .talk-card-kr { font-size:13px; font-weight:700; color:var(--text-1); margin-bottom:6px; }
+    .talk-card-jp { font-size:14px; color:var(--text-2); line-height:1.5; margin-bottom:4px; }
+    .talk-card-read { font-size:11px; color:var(--text-4); font-style:italic; }
+    .card-display { display:none; flex-direction:column; align-items:center; padding:20px; gap:16px; }
+    .card-display.open { display:flex; }
+    .card-display-label { font-size:12px; color:var(--text-3); font-weight:600; letter-spacing:.5px; text-align:center; }
+    .card-display-main { background:var(--primary); border-radius:20px; padding:28px 24px; width:100%; text-align:center; }
+    .card-jp-main { font-size:24px; font-weight:700; color:#fff; line-height:1.6; margin-bottom:12px; }
+    .card-jp-read { font-size:13px; color:rgba(255,255,255,.6); font-style:italic; }
+    .card-back-btn { background:var(--input-bg); border:none; border-radius:12px; padding:12px 28px; font-size:14px; font-weight:600; color:var(--text-2); cursor:pointer; width:100%; }
+
+    /* ── ROUTE MODAL ── */
+    .route-modal-overlay { display:none; position:fixed; inset:0; background:var(--bg); z-index:200; flex-direction:column; transition:background .3s; }
+    .route-modal-overlay.open { display:flex; }
+    .route-modal-header { background:var(--card); padding:56px 20px 16px; border-bottom:1px solid var(--border); transition:background .3s; }
+    .route-modal-title { font-size:18px; font-weight:800; color:var(--text-1); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .route-modal-back { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-2); padding:4px; }
+    .route-input-group { background:var(--input-bg); border-radius:16px; overflow:hidden; }
+    .route-input-row { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; }
+    .route-input-row + .route-input-row { border-top:1px solid var(--border); }
+    .route-input-dot { width:10px; height:10px; border-radius:50%; border:2px solid; flex-shrink:0; }
+    .route-input-dot.origin { border-color:var(--accent); background:var(--accent); }
+    .route-input-dot.dest   { border-color:var(--danger); }
+    .route-input-placeholder { font-size:15px; color:var(--text-3); flex:1; }
+    .route-input-placeholder.filled { color:var(--text-1); font-weight:600; }
+    .route-modal-body { flex:1; padding:20px 16px; overflow-y:auto; }
+    .recent-list-title { font-size:12px; font-weight:700; color:var(--text-4); letter-spacing:.5px; margin-bottom:10px; }
+    .recent-station-list { display:flex; flex-direction:column; gap:8px; }
+    .recent-station-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--card); border-radius:12px; cursor:pointer; transition:background .15s; }
+    .recent-station-item:active { background:var(--accent-lt); }
+    .recent-station-icon { font-size:16px; color:var(--text-3); }
+    .recent-station-name { font-size:14px; font-weight:600; color:var(--text-1); flex:1; }
+    .recent-station-line { font-size:11px; color:var(--text-3); }
+
+    /* ── RESULT SHEET ── */
+    .result-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300; align-items:flex-end; justify-content:center; }
+    .result-modal-overlay.open { display:flex; }
+    .result-sheet { background:var(--sheet-bg); border-radius:28px 28px 0 0; width:100%; max-width:390px; padding:0 0 calc(20px + var(--safe-bottom)); animation:slideUp .3s ease; max-height:90vh; overflow-y:auto; transition:background .3s; }
+    .result-header { padding:20px 20px 16px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--sheet-bg); z-index:1; }
+    .result-stations { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .result-station-name { font-size:18px; font-weight:800; color:var(--text-1); }
+    .result-arrow-icon { font-size:16px; color:var(--text-4); }
+    .result-meta { display:flex; align-items:center; gap:12px; }
+    .result-time { font-size:22px; font-weight:800; color:var(--primary); }
+    [data-theme="dark"] .result-time { color:#8AA4FF; }
+    .result-meta-chips { display:flex; gap:6px; flex-wrap:wrap; }
+    .meta-chip { font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; }
+    .meta-chip.fare { background:var(--accent-lt); color:var(--accent); }
+    .result-body { padding:20px; }
+    .result-card { background:var(--input-bg); border-radius:20px; padding:20px; margin-bottom:12px; }
+    .result-card-title { font-size:11px; font-weight:700; color:var(--text-4); letter-spacing:.5px; margin-bottom:10px; }
+    .result-info-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .result-info-row:last-child { margin-bottom:0; }
+    .result-info-icon { font-size:18px; width:24px; text-align:center; }
+    .result-info-label { font-size:13px; color:var(--text-3); width:70px; flex-shrink:0; }
+    .result-info-value { font-size:14px; font-weight:700; color:var(--text-1); }
+    .result-exit-highlight { background:linear-gradient(135deg,var(--accent),#6B8AFF); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .result-exit-icon { font-size:24px; }
+    .result-exit-info { flex:1; }
+    .result-exit-main { font-size:18px; font-weight:800; color:#fff; }
+    .result-exit-sub { font-size:12px; color:rgba(255,255,255,.75); margin-top:2px; }
+    .result-nav-btn { width:100%; padding:15px; background:linear-gradient(135deg,var(--accent),#6B8AFF); border:none; border-radius:16px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .result-nav-btn:active { opacity:.85; }
+    .result-close-btn { width:100%; padding:13px; background:var(--input-bg); border:none; border-radius:16px; color:var(--text-2); font-size:14px; font-weight:600; cursor:pointer; margin-top:8px; }
+
+    /* ── INDOOR MAP ── */
+    .map-modal-overlay { display:none; position:fixed; inset:0; background:var(--bg); z-index:400; flex-direction:column; transition:background .3s; }
+    .map-modal-overlay.open { display:flex; }
+    .map-modal-header { background:var(--card); padding:52px 16px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; transition:background .3s; }
+    .map-back-btn { width:36px; height:36px; background:var(--input-bg); border:none; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; color:var(--text-2); flex-shrink:0; }
+    .map-header-info { flex:1; }
+    .map-station-name { font-size:17px; font-weight:800; color:var(--text-1); }
+    .map-station-sub  { font-size:12px; color:var(--text-3); margin-top:2px; }
+    .map-offline-badge { display:inline-flex; align-items:center; gap:4px; background:#E8F9EE; border-radius:8px; padding:4px 8px; font-size:10px; font-weight:700; color:#1a7f37; }
+    .map-body { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .map-step-card { background:var(--card); margin:14px 16px; border-radius:20px; padding:18px; box-shadow:0 4px 20px rgba(0,0,0,.08); transition:background .3s; }
+    .map-step-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .map-step-num { width:32px; height:32px; background:var(--accent); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:#fff; flex-shrink:0; }
+    .map-step-num.done { background:var(--success); }
+    .map-step-label { font-size:11px; font-weight:700; color:var(--text-4); letter-spacing:.5px; }
+    .map-step-total { font-size:11px; color:var(--text-4); margin-left:auto; }
+    .map-step-direction { font-size:20px; font-weight:800; color:var(--text-1); margin-bottom:6px; line-height:1.3; }
+    .map-step-landmark { font-size:13px; color:var(--text-3); }
+    .map-step-progress { display:flex; gap:6px; margin-top:14px; }
+    .map-prog-dot { flex:1; height:4px; border-radius:2px; background:var(--border); transition:background .3s; }
+    .map-prog-dot.done    { background:var(--success); }
+    .map-prog-dot.current { background:var(--accent); }
+    .map-canvas { flex:1; margin:0 16px 14px; background:var(--card); border-radius:20px; overflow:hidden; position:relative; min-height:200px; }
+    .map-canvas svg { width:100%; height:100%; }
+    .map-facility-row { display:flex; gap:8px; padding:0 16px 10px; overflow-x:auto; scrollbar-width:none; }
+    .map-facility-row::-webkit-scrollbar { display:none; }
+    .facility-chip { display:inline-flex; align-items:center; gap:5px; background:var(--input-bg); border-radius:10px; padding:7px 12px; font-size:12px; font-weight:600; color:var(--text-2); cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .facility-chip:active { background:var(--accent-lt); color:var(--accent); }
+    .map-bottom-row { display:flex; gap:10px; padding:0 16px calc(16px + var(--safe-bottom)); }
+    .map-btn { flex:1; padding:14px; border-radius:14px; font-size:14px; font-weight:700; cursor:pointer; border:none; }
+    .map-btn-primary { background:linear-gradient(135deg,var(--accent),#6B8AFF); color:#fff; }
+    .map-btn-secondary { background:var(--input-bg); color:var(--text-2); }
+
+    /* ── ALERT SETTINGS ── */
+    .alert-sheet { background:var(--sheet-bg); border-radius:28px 28px 0 0; width:100%; max-width:390px; padding:0 0 calc(28px + var(--safe-bottom)); animation:slideUp .3s ease; transition:background .3s; }
+    .alert-section { padding:20px 20px 0; }
+    .alert-section-title { font-size:12px; font-weight:700; color:var(--text-4); letter-spacing:.5px; margin-bottom:12px; }
+    .threshold-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
+    .threshold-btn { padding:14px 8px; border-radius:14px; border:2px solid var(--border); background:var(--input-bg); font-size:13px; font-weight:700; color:var(--text-2); cursor:pointer; text-align:center; transition:all .15s; }
+    .threshold-btn.active { background:var(--accent-lt); color:var(--accent); border-color:var(--accent); }
+    .threshold-btn .yen { font-size:10px; font-weight:500; display:block; color:var(--text-3); margin-top:2px; }
+    .toggle-row { display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); }
+    .toggle-row:last-child { border-bottom:none; }
+    .toggle-info { flex:1; }
+    .toggle-label { font-size:14px; font-weight:600; color:var(--text-1); margin-bottom:3px; }
+    .toggle-desc  { font-size:12px; color:var(--text-3); }
+    .toggle-switch { width:50px; height:28px; background:var(--border); border-radius:14px; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+    .toggle-switch.on { background:var(--success); }
+    .toggle-switch::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; background:#fff; border-radius:50%; transition:left .2s; box-shadow:0 2px 6px rgba(0,0,0,.2); }
+    .toggle-switch.on::after { left:25px; }
+    .alert-save-btn { display:block; width:calc(100% - 40px); margin:20px auto 0; padding:16px; background:linear-gradient(135deg,var(--accent),#6B8AFF); border:none; border-radius:16px; color:#fff; font-size:16px; font-weight:700; cursor:pointer; }
+    .alert-save-btn:active { opacity:.85; }
+  </style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div class="onboarding-overlay" id="onboardingOverlay">
+  <div class="ob-top">
+    <div class="ob-logo-mark">역</div>
+    <div class="ob-title">에키</div>
+    <div class="ob-title-jp">EEKI · 駅 — 일본 지하철 길잡이</div>
+    <div class="ob-desc">역 안에서 길을 잃지 않도록.<br>구글맵이 알려주지 않는 그 이후를 안내해요.</div>
+    <div class="ob-train-anim">
+      <div class="ob-train">🚅</div>
+      <div class="ob-track"></div>
+    </div>
+  </div>
+  <div class="ob-choice-section">
+    <div class="ob-choice-label">지금 어떤 상황인가요?</div>
+    <button class="ob-btn ob-btn-primary" onclick="startOnboarding('prep')">
+      <div class="ob-btn-icon">📋</div>
+      <div class="ob-btn-text">
+        <div class="ob-btn-title">여행 전에 미리 준비할게요</div>
+        <div class="ob-btn-sub">교통카드 설정 · 오프라인 지도 다운로드</div>
+      </div>
+      <div class="ob-btn-arrow">›</div>
+    </button>
+    <button class="ob-btn ob-btn-secondary" onclick="startOnboarding('now')">
+      <div class="ob-btn-icon">⚡</div>
+      <div class="ob-btn-text">
+        <div class="ob-btn-title">지금 당장 경로 찾기</div>
+        <div class="ob-btn-sub">30초 안에 탑승 정보 확인</div>
+      </div>
+      <div class="ob-btn-arrow">›</div>
+    </button>
+    <div class="ob-auto-label">5초 후 자동으로 시작됩니다</div>
+    <div class="ob-auto-bar"><div class="ob-auto-progress"></div></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="phone-frame">
+  <div class="scroll-area">
+
+    <!-- HERO -->
+    <div class="hero" id="heroEl">
+      <div class="hero-top">
+        <div class="hero-logo">
+          <div class="logo-mark">역</div>
+          <div>
+            <div class="logo-text">에키</div>
+            <div class="logo-jp">EEKI · 駅</div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="icon-btn" onclick="toggleDark()" id="darkBtn" title="다크모드">🌙</button>
+          <button class="icon-btn" onclick="openAlertSettings()" title="알림 설정">🔔</button>
+        </div>
+      </div>
+
+      <div class="city-pill" onclick="openCityModal()" id="cityPill">
+        <span class="dot-live"></span>
+        <span id="cityPillText">🇯🇵 도쿄 · 오프라인 지도 준비됨</span>
+        <span style="font-size:10px;opacity:.7">▾</span>
+      </div>
+
+      <div class="hero-headline" id="heroHeadline">어디로 갈까요?</div>
+      <div class="hero-sub" id="heroSub">목적지를 입력하면 경로를 바로 안내해드려요</div>
+
+      <div class="search-bar" onclick="openRouteModal()">
+        <div class="search-row">
+          <div class="search-icon origin">📍</div>
+          <div class="search-text" id="originLabel">현재 위치</div>
+        </div>
+        <div class="search-row">
+          <div class="search-icon dest">🏁</div>
+          <div class="search-text" id="destLabel">목적지 입력</div>
+          <div class="search-swap-btn" onclick="event.stopPropagation();swapSearch()" title="출발·도착 바꾸기">⇅</div>
+        </div>
+        <button class="search-go-btn">🚇 경로 검색하기</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <div class="sec-header" style="margin-top:24px;">
+        <div class="sec-title">빠른 기능</div>
+      </div>
+      <div class="quick-grid">
+        <div class="quick-item" onclick="openMapModal()">
+          <div class="quick-icon map">🗺️</div>
+          <div class="quick-label">역내<br>지도</div>
+        </div>
+        <div class="quick-item" onclick="openTalkModal()">
+          <div class="quick-icon talk">🗣️<span class="badge-dot"></span></div>
+          <div class="quick-label">역무원<br>대화카드</div>
+        </div>
+        <div class="quick-item" id="atmBtn" onclick="showAtmInfo()">
+          <div class="quick-icon atm">🏧</div>
+          <div class="quick-label">ATM<br>찾기</div>
+        </div>
+        <div class="quick-item" onclick="alert('교통카드 비교\n\n✅ Suica — 범용, 애플페이 지원\n✅ Pasmo — 도쿄·간토 지역\n⚠️ 트래블월렛 — 한국카드 연동\n💡 일회권 — 잔액 걱정 없음')">
+          <div class="quick-icon card">💳</div>
+          <div class="quick-label">결제수단<br>비교</div>
+        </div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-title">내 교통카드</div>
+        <div class="sec-more" onclick="openAlertSettings()">알림 설정</div>
+      </div>
+      <div class="payment-card" id="paymentCard" onclick="openAlertSettings()">
+        <div class="card-chip-row">
+          <div class="card-type-badge">
+            <div class="card-status-dot warn"></div>
+            <div class="card-type-name" id="cardTypeName">Suica</div>
+          </div>
+          <div class="card-nfc-label">NFC 자동감지</div>
+        </div>
+        <div class="card-balance-label">현재 잔액</div>
+        <div class="card-balance-row">
+          <div class="card-currency">¥</div>
+          <div class="card-balance">1,240</div>
+        </div>
+        <div class="card-alert-bar">
+          <div class="card-alert-icon">⚠️</div>
+          <div class="card-alert-text">잔액이 기준치(¥2,000)보다 낮아요</div>
+          <button class="card-alert-btn" onclick="event.stopPropagation();showAtmInfo()">ATM 찾기</button>
+        </div>
+        <div class="card-footer-row">
+          <div class="card-updated">마지막 갱신 · 방금 전</div>
+          <button class="card-charge-btn" onclick="event.stopPropagation();alert('충전 안내\n\n1. 역내 ATM 또는 충전기 이용\n2. 개찰구에서 직접 충전 가능\n\n추천 충전 금액: ¥3,000')">충전 안내</button>
+        </div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-title">최근 경로</div>
+        <div class="sec-more">전체보기</div>
+      </div>
+      <div class="route-list" id="routeList"></div>
+
+      <div class="offline-section">
+        <div class="sec-header">
+          <div class="sec-title">저장된 역 지도</div>
+          <div class="sec-more">관리</div>
+        </div>
+        <div class="offline-list" id="offlineList"></div>
+      </div>
+
+      <div class="tip-banner" id="tipBanner">
+        <div class="tip-icon">💡</div>
+        <div>
+          <div class="tip-title">역무원 대화카드 준비됐나요?</div>
+          <div class="tip-desc">개찰구 문제, 길 찾기, 잔액 부족 — 30개 이상의 카드가 오프라인으로 준비되어 있어요.</div>
+        </div>
+        <div class="tip-close" onclick="event.stopPropagation();document.getElementById('tipBanner').style.display='none'">✕</div>
+      </div>
+
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label" style="color:var(--accent);">홈</div>
+    </div>
+    <div class="nav-item" onclick="openRouteModal()">
+      <div class="nav-icon">🔍</div>
+      <div class="nav-label">경로검색</div>
+    </div>
+    <div class="nav-center-btn" onclick="openTalkModal()">🗣️</div>
+    <div class="nav-item" onclick="openAlertSettings()">
+      <div class="nav-icon">💳</div>
+      <div class="nav-label">내 카드</div>
+    </div>
+    <div class="nav-item" onclick="openMapModal()">
+      <div class="nav-icon">🗺️</div>
+      <div class="nav-label">역내지도</div>
+    </div>
+  </nav>
+</div>
+
+<!-- CITY SELECTOR MODAL -->
+<div class="modal-overlay" id="cityModal" onclick="closeCityModal(event)">
+  <div class="modal-sheet city-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🇯🇵 도시 선택</div>
+      <button class="modal-close-btn" onclick="closeCityModal()">✕</button>
+    </div>
+    <div class="modal-sub">도시를 선택하면 노선, 역 정보, 지도가 바뀌어요</div>
+    <div id="cityList"></div>
+  </div>
+</div>
+
+<!-- TALK CARD MODAL -->
+<div class="modal-overlay" id="talkModal" onclick="closeTalkModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="talkListView">
+      <div class="modal-header">
+        <div class="modal-title">🗣️ 역무원 대화카드</div>
+        <button class="modal-close-btn" onclick="closeTalkModal()">✕</button>
+      </div>
+      <div class="modal-sub">카드를 보여주면 역무원이 이해해요 · 오프라인 작동</div>
+      <div class="cat-tabs">
+        <div class="cat-tab active" onclick="setCatTab(this,'gate')">🚪 개찰구</div>
+        <div class="cat-tab" onclick="setCatTab(this,'train')">🚆 열차</div>
+        <div class="cat-tab" onclick="setCatTab(this,'location')">📍 위치</div>
+        <div class="cat-tab" onclick="setCatTab(this,'lost')">🔍 분실</div>
+        <div class="cat-tab" onclick="setCatTab(this,'pay')">💳 결제</div>
+      </div>
+      <div class="card-list" id="cardList"></div>
+      <div style="height:16px;"></div>
+    </div>
+    <div class="card-display" id="cardDisplay">
+      <div class="modal-header" style="width:100%">
+        <button class="modal-close-btn" style="background:none;font-size:15px;color:var(--text-2);" onclick="backToList()">← 뒤로</button>
+        <div class="modal-title" style="font-size:14px;">카드 보여주기</div>
+        <button class="modal-close-btn" onclick="closeTalkModal()">✕</button>
+      </div>
+      <div class="card-display-label">🔆 화면을 역무원에게 보여주세요</div>
+      <div class="card-display-main">
+        <div class="card-jp-main" id="cardJpText"></div>
+        <div class="card-jp-read" id="cardJpRead"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text-3);text-align:center;padding:0 20px;">역무원이 보기 쉽도록 글자를 크게 표시했어요.<br>화면이 꺼지지 않도록 자동 설정됩니다.</div>
+      <button class="card-back-btn" onclick="backToList()">← 다른 카드 선택</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROUTE SEARCH MODAL -->
+<div class="route-modal-overlay" id="routeModal">
+  <div class="route-modal-header">
+    <div class="route-modal-title">
+      <button class="route-modal-back" onclick="closeRouteModal()">←</button>
+      경로 검색
+    </div>
+    <div class="route-input-group">
+      <div class="route-input-row">
+        <div class="route-input-dot origin"></div>
+        <div class="route-input-placeholder" id="routeOriginText">현재 위치</div>
+      </div>
+      <div class="route-input-row">
+        <div class="route-input-dot dest"></div>
+        <div class="route-input-placeholder" id="routeDestText">목적지를 입력하세요</div>
+      </div>
+    </div>
+  </div>
+  <div class="route-modal-body">
+    <div class="recent-list-title" id="stationListTitle">자주 가는 역</div>
+    <div class="recent-station-list" id="stationList"></div>
+  </div>
+</div>
+
+<!-- RESULT SHEET -->
+<div class="result-modal-overlay" id="resultModal" onclick="closeResultModal(event)">
+  <div class="result-sheet">
+    <div class="modal-handle"></div>
+    <div class="result-header">
+      <div class="result-stations">
+        <div class="result-station-name" id="resOrigin">신주쿠</div>
+        <div class="result-arrow-icon">→</div>
+        <div class="result-station-name" id="resDest">하라주쿠</div>
+      </div>
+      <div class="result-meta">
+        <div class="result-time" id="resTime">8분</div>
+        <div class="result-meta-chips">
+          <div class="meta-chip fare" id="resFare">¥160</div>
+        </div>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="result-card">
+        <div class="result-card-title">탑승 정보</div>
+        <div class="result-info-row"><div class="result-info-icon">🚆</div><div class="result-info-label">노선</div><div class="result-info-value" id="resLine">야마노테선</div></div>
+        <div class="result-info-row"><div class="result-info-icon">📢</div><div class="result-info-label">플랫폼</div><div class="result-info-value" id="resPlatform">5번 플랫폼</div></div>
+        <div class="result-info-row"><div class="result-info-icon">🚉</div><div class="result-info-label">정거장</div><div class="result-info-value" id="resStops">2정거장 후 하차</div></div>
+      </div>
+      <div class="result-exit-highlight">
+        <div class="result-exit-icon">🚪</div>
+        <div class="result-exit-info">
+          <div class="result-exit-main" id="resExit">A1 출구</div>
+          <div class="result-exit-sub" id="resExitSub">다케시타도리 방면 · 도보 3분</div>
+        </div>
+        <div style="font-size:20px;color:rgba(255,255,255,.8)">›</div>
+      </div>
+      <button class="result-nav-btn" onclick="closeResultModal();openMapModal()">🗺️ 역내 길안내 시작</button>
+      <button class="result-close-btn" onclick="closeResultModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- INDOOR MAP MODAL -->
+<div class="map-modal-overlay" id="mapModal">
+  <div class="map-modal-header">
+    <button class="map-back-btn" onclick="closeMapModal()">←</button>
+    <div class="map-header-info">
+      <div class="map-station-name" id="mapStationName">신주쿠역 역내 지도</div>
+      <div class="map-station-sub" id="mapStationSub">5번 플랫폼 → A1 출구</div>
+    </div>
+    <div class="map-offline-badge">📡 오프라인</div>
+  </div>
+  <div class="map-body">
+    <div class="map-step-card">
+      <div class="map-step-header">
+        <div class="map-step-num" id="stepNumEl">1</div>
+        <div><div class="map-step-label">현재 단계</div></div>
+        <div class="map-step-total" id="stepTotalEl">1 / 4</div>
+      </div>
+      <div class="map-step-direction" id="stepDirection">↑ 직진 40m</div>
+      <div class="map-step-landmark" id="stepLandmark">🏪 편의점 지나쳐 계속 이동</div>
+      <div class="map-step-progress" id="stepProgress"></div>
+    </div>
+    <div class="map-facility-row" id="mapFacilityRow"></div>
+    <div class="map-canvas">
+      <svg viewBox="0 0 360 260" xmlns="http://www.w3.org/2000/svg" id="mapSvg">
+        <rect width="360" height="260" fill="#1a1a2e"/>
+        <rect x="20" y="20" width="320" height="220" rx="12" fill="#252545" stroke="#3a3a6a" stroke-width="1.5"/>
+        <!-- 플랫폼 -->
+        <rect x="40" y="160" width="280" height="60" rx="8" fill="#2a2a4a" stroke="#4a4a8a" stroke-width="1"/>
+        <text x="180" y="196" text-anchor="middle" fill="#8888bb" font-size="11" font-weight="600" id="mapPlatformLabel">5번 플랫폼</text>
+        <!-- 열차 -->
+        <rect x="60" y="165" width="100" height="28" rx="6" fill="#4F72FF" opacity=".8"/>
+        <rect x="64" y="169" width="18" height="8" rx="2" fill="rgba(255,255,255,.4)"/>
+        <rect x="84" y="169" width="18" height="8" rx="2" fill="rgba(255,255,255,.4)"/>
+        <rect x="104" y="169" width="18" height="8" rx="2" fill="rgba(255,255,255,.4)"/>
+        <text x="110" y="186" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">탑승 →</text>
+        <!-- 계단 -->
+        <rect x="140" y="120" width="30" height="40" rx="4" fill="#3a3a6a"/>
+        <text x="155" y="143" text-anchor="middle" fill="#aaaacc" font-size="9">계단</text>
+        <rect x="190" y="120" width="30" height="40" rx="4" fill="#3a3a6a"/>
+        <text x="205" y="143" text-anchor="middle" fill="#aaaacc" font-size="9">계단</text>
+        <!-- 개찰구 -->
+        <rect x="100" y="70" width="160" height="35" rx="6" fill="#2e2e50" stroke="#5555aa" stroke-width="1"/>
+        <text x="180" y="92" text-anchor="middle" fill="#9999cc" font-size="11" font-weight="600">개찰구</text>
+        <!-- 출구 목적지 -->
+        <circle cx="60" cy="45" r="18" fill="#34C759" opacity=".9"/>
+        <text x="60" y="49" text-anchor="middle" fill="#fff" font-size="10" font-weight="800" id="mapExitLabel">A1</text>
+        <text x="60" y="58" text-anchor="middle" fill="rgba(255,255,255,.8)" font-size="7">출구</text>
+        <!-- 현재 위치 -->
+        <circle cx="110" cy="185" r="10" fill="#FF3B30" opacity=".9">
+          <animate attributeName="opacity" values=".9;.3;.9" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="110" cy="185" r="6" fill="#fff"/>
+        <text x="110" y="210" text-anchor="middle" fill="#FF3B30" font-size="9" font-weight="700">현재 위치</text>
+        <!-- 경로 -->
+        <path d="M110 175 L110 135 L155 135 L155 105 L180 85" stroke="#4F72FF" stroke-width="2.5" fill="none" stroke-dasharray="6,4" stroke-linecap="round" opacity=".8">
+          <animate attributeName="stroke-dashoffset" values="0;-20" dur="1s" repeatCount="indefinite"/>
+        </path>
+        <!-- 편의점 -->
+        <rect x="280" y="120" width="30" height="24" rx="4" fill="#3a5a3a"/>
+        <text x="295" y="135" text-anchor="middle" fill="#88cc88" font-size="10">편의점</text>
+        <!-- 범례 -->
+        <circle cx="230" cy="45" r="6" fill="#34C759"/>
+        <text x="240" y="49" fill="#aaaacc" font-size="9">목적지 출구</text>
+        <circle cx="230" cy="62" r="6" fill="#FF3B30"/>
+        <text x="240" y="66" fill="#aaaacc" font-size="9">현재 위치</text>
+        <line x1="224" y1="78" x2="236" y2="78" stroke="#4F72FF" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="240" y="82" fill="#aaaacc" font-size="9">이동 경로</text>
+      </svg>
+    </div>
+    <div class="map-bottom-row">
+      <button class="map-btn map-btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="map-btn map-btn-primary" id="nextStepBtn" onclick="nextStep()">다음 단계 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT SETTINGS -->
+<div class="modal-overlay" id="alertModal" onclick="closeAlertSettings(event)">
+  <div class="alert-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🔔 잔액 알림 설정</div>
+      <button class="modal-close-btn" onclick="closeAlertSettings()">✕</button>
+    </div>
+    <div class="modal-sub" id="alertModalSub">Suica · 현재 잔액 ¥1,240</div>
+    <div class="alert-section">
+      <div class="alert-section-title">알림 기준 잔액</div>
+      <div class="threshold-grid">
+        <div class="threshold-btn" onclick="setThreshold(this)">¥500<span class="yen">최소</span></div>
+        <div class="threshold-btn" onclick="setThreshold(this)">¥1,000<span class="yen">권장</span></div>
+        <div class="threshold-btn active" onclick="setThreshold(this)">¥2,000<span class="yen">현재</span></div>
+        <div class="threshold-btn" onclick="setThreshold(this)">¥3,000<span class="yen">여유</span></div>
+      </div>
+      <div class="alert-section-title">알림 종류</div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">잔액 부족 알림</div><div class="toggle-desc">기준 잔액 이하로 내려가면 알림</div></div><div class="toggle-switch on" id="toggle1" onclick="toggleSwitch('toggle1')"></div></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">개찰구 통과 시 알림</div><div class="toggle-desc">NFC 감지 후 잔액 즉시 확인</div></div><div class="toggle-switch on" id="toggle2" onclick="toggleSwitch('toggle2')"></div></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">경로 검색 시 잔액 확인</div><div class="toggle-desc">요금 부족 시 경로 결과에 경고 표시</div></div><div class="toggle-switch on" id="toggle3" onclick="toggleSwitch('toggle3')"></div></div>
+      <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">NFC 자동 잔액 감지</div><div class="toggle-desc">카드 태그 시 자동으로 잔액 읽기</div></div><div class="toggle-switch" id="toggle4" onclick="toggleSwitch('toggle4')"></div></div>
+    </div>
+    <button class="alert-save-btn" onclick="saveAlertSettings()">설정 저장</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   CITY DATA
+══════════════════════════════════════ */
+const cities = {
+  tokyo: {
+    id: 'tokyo',
+    name: '도쿄',
+    flag: '🗼',
+    pill: '🇯🇵 도쿄 · 오프라인 지도 준비됨',
+    headline: '어디로 갈까요?',
+    sub: '야마노테선·도쿄메트로·JR 경로를 안내해요',
+    heroGrad: 'linear-gradient(160deg,#1a2d5a 0%,#2C3E6B 55%,#3a5fc0 100%)',
+    cardName: 'Suica',
+    atmInfo: '가장 가까운 ATM\n\n📍 남쪽 개찰구 기둥 옆 · 도보 30초\n🕐 24시간 운영\n\n추천 충전: ¥3,000',
+    lines: ['야마노테선','도쿄메트로','JR 주오선'],
+    stations: [
+      { name:'신주쿠역', line:'야마노테선 · JR', icon:'🕐' },
+      { name:'하라주쿠역', line:'야마노테선', icon:'🕐' },
+      { name:'아키하바라역', line:'주오·소부선', icon:'⭐' },
+      { name:'시부야역', line:'야마노테선 · 도쿄메트로', icon:'⭐' },
+      { name:'도쿄역', line:'야마노테선 · 신칸센', icon:'🔍' },
+      { name:'아사쿠사역', line:'도쿄메트로 긴자선', icon:'🔍' },
+    ],
+    routes: [
+      { from:'신주쿠', to:'하라주쿠', line:'야마노테선', time:'8분', fare:'¥160', stops:'2정거장', platform:'5번 플랫폼 · 오사키 방면', exit:'A1 출구', exitSub:'다케시타도리 방면 · 도보 3분' },
+      { from:'도쿄역', to:'아키하바라', line:'주오·소부선', time:'5분', fare:'¥160', stops:'1정거장', platform:'1번 플랫폼 · 미타카 방면', exit:'동쪽 출구', exitSub:'요도바시 방면 · 도보 2분' },
+      { from:'시부야', to:'오다이바', line:'린카이선', time:'30분', fare:'¥520', stops:'환승 1회', platform:'2번 플랫폼', exit:'2번 출구', exitSub:'다이버시티 방면 · 도보 5분' },
+    ],
+    routeMeta: ['오늘 14:22', '어제', '어제'],
+    maps: [
+      { name:'신주쿠역', icon:'🏙️', size:'2.3 MB', saved:true },
+      { name:'도쿄역', icon:'🗼', size:'2.1 MB', saved:true },
+      { name:'시부야역', icon:'🌊', size:'1.9 MB', saved:true },
+      { name:'우에노역', icon:'🏛️', size:'1.5 MB', saved:false },
+    ],
+    mapSteps: [
+      { dir:'↑ 직진 40m', landmark:'🏪 편의점 지나쳐 계속 이동' },
+      { dir:'↓ 계단 내려가기 (B2층)', landmark:'🚶 오른쪽 계단 이용 · 엘리베이터 가능' },
+      { dir:'↗ 우회전 후 20m', landmark:'🔵 야마노테선 표지판 따라 이동' },
+      { dir:'✅ 5번 플랫폼 도착!', landmark:'🚅 열차 탑승 준비 완료' },
+    ],
+    mapName: '신주쿠역 역내 지도',
+    mapSub: '5번 플랫폼 → A1 출구',
+    mapPlatform: '5번 플랫폼 · 야마노테선',
+    mapExit: 'A1',
+    facilities: ['🚻 화장실','🔒 코인로커','🏧 ATM','☕ 카페','🛗 엘리베이터'],
+  },
+
+  osaka: {
+    id: 'osaka',
+    name: '오사카',
+    flag: '🏯',
+    pill: '🏯 오사카 · 오프라인 지도 준비됨',
+    headline: '어디로 갈까요?',
+    sub: '미도스지선·오사카 환상선·한신 경로를 안내해요',
+    heroGrad: 'linear-gradient(160deg,#4a1a1a 0%,#7B2D2D 55%,#c05a3a 100%)',
+    cardName: 'ICOCA',
+    atmInfo: '가장 가까운 ATM\n\n📍 우메다역 중앙개찰구 왼쪽 50m\n🕐 24시간 운영\n\n추천 충전: ¥3,000',
+    lines: ['미도스지선','오사카 환상선','한신전철'],
+    stations: [
+      { name:'우메다역', line:'미도스지선 · 타니마치선', icon:'🕐' },
+      { name:'난바역', line:'미도스지선 · 센니치마에선', icon:'🕐' },
+      { name:'신사이바시역', line:'미도스지선', icon:'⭐' },
+      { name:'덴노지역', line:'미도스지선 · 타니마치선', icon:'⭐' },
+      { name:'오사카성공원역', line:'JR 오사카 환상선', icon:'🔍' },
+      { name:'유니버설시티역', line:'JR 유메사키선', icon:'🔍' },
+    ],
+    routes: [
+      { from:'우메다', to:'난바', line:'미도스지선', time:'9분', fare:'¥230', stops:'4정거장', platform:'2번 플랫폼 · 나카모즈 방면', exit:'14번 출구', exitSub:'도톤보리 방면 · 도보 3분' },
+      { from:'난바', to:'신사이바시', line:'미도스지선', time:'3분', fare:'¥180', stops:'1정거장', platform:'2번 플랫폼', exit:'6번 출구', exitSub:'신사이바시 쇼핑몰 방면' },
+      { from:'우메다', to:'덴노지', line:'미도스지선', time:'17분', fare:'¥280', stops:'8정거장', platform:'2번 플랫폼', exit:'1번 출구', exitSub:'아베노 방면 · 도보 2분' },
+    ],
+    routeMeta: ['오늘 11:30', '어제', '어제'],
+    maps: [
+      { name:'우메다역', icon:'🏯', size:'2.5 MB', saved:true },
+      { name:'난바역', icon:'🌃', size:'2.0 MB', saved:true },
+      { name:'덴노지역', icon:'🦌', size:'1.8 MB', saved:false },
+      { name:'신오사카역', icon:'🚄', size:'1.6 MB', saved:false },
+    ],
+    mapSteps: [
+      { dir:'↑ 직진 30m', landmark:'🏬 루쿠아 백화점 방향으로 이동' },
+      { dir:'↓ 에스컬레이터 내려가기', landmark:'🔴 미도스지선 빨간 표지판 따라 이동' },
+      { dir:'↗ 우회전 후 20m', landmark:'🏪 편의점 옆 계단 이용' },
+      { dir:'✅ 2번 플랫폼 도착!', landmark:'🚅 미도스지선 탑승 준비 완료' },
+    ],
+    mapName: '우메다역 역내 지도',
+    mapSub: '2번 플랫폼 → 14번 출구',
+    mapPlatform: '2번 플랫폼 · 미도스지선',
+    mapExit: '14',
+    facilities: ['🚻 화장실','🔒 코인로커','🏧 ATM','☕ 카페','🛗 엘리베이터','🛍️ 편의점'],
+  },
+
+  fukuoka: {
+    id: 'fukuoka',
+    name: '후쿠오카',
+    flag: '🌊',
+    pill: '🌊 후쿠오카 · 오프라인 지도 준비됨',
+    headline: '어디로 갈까요?',
+    sub: '후쿠오카 시지하철·JR 하카타 경로를 안내해요',
+    heroGrad: 'linear-gradient(160deg,#0d3a2e 0%,#1a5c47 55%,#2e8a6a 100%)',
+    cardName: 'Suica / SUGOCA',
+    atmInfo: '가장 가까운 ATM\n\n📍 하카타역 지하 1층 중앙 · 도보 1분\n🕐 24시간 운영\n\n추천 충전: ¥3,000',
+    lines: ['공항선','하코자키선','나나쿠마선'],
+    stations: [
+      { name:'하카타역', line:'공항선 · JR · 신칸센', icon:'🕐' },
+      { name:'텐진역', line:'공항선 · 나나쿠마선', icon:'🕐' },
+      { name:'나카스카와바타역', line:'공항선 · 하코자키선', icon:'⭐' },
+      { name:'후쿠오카공항역', line:'공항선', icon:'⭐' },
+      { name:'텐진미나미역', line:'나나쿠마선', icon:'🔍' },
+      { name:'메이노하마역', line:'공항선', icon:'🔍' },
+    ],
+    routes: [
+      { from:'하카타', to:'텐진', line:'공항선', time:'8분', fare:'¥210', stops:'2정거장', platform:'1번 플랫폼 · 메이노하마 방면', exit:'7번 출구', exitSub:'텐진 지하상가 방면 · 도보 2분' },
+      { from:'텐진', to:'하카타', line:'공항선', time:'8분', fare:'¥210', stops:'2정거장', platform:'2번 플랫폼 · 후쿠오카공항 방면', exit:'하카타 출구', exitSub:'JR 환승 방면 · 도보 3분' },
+      { from:'하카타', to:'후쿠오카공항', line:'공항선', time:'5분', fare:'¥260', stops:'2정거장', platform:'1번 플랫폼', exit:'1번 출구', exitSub:'국내선 터미널 방면' },
+    ],
+    routeMeta: ['오늘 10:15', '어제', '그저께'],
+    maps: [
+      { name:'하카타역', icon:'🛤️', size:'2.0 MB', saved:true },
+      { name:'텐진역', icon:'🌊', size:'1.8 MB', saved:true },
+      { name:'나카스카와바타역', icon:'🎋', size:'1.4 MB', saved:false },
+      { name:'후쿠오카공항역', icon:'✈️', size:'1.2 MB', saved:false },
+    ],
+    mapSteps: [
+      { dir:'↑ 직진 25m', landmark:'🏢 하카타 시티 방향으로 이동' },
+      { dir:'↓ 계단 내려가기 (B1층)', landmark:'🟢 공항선 초록 표지판 따라 이동' },
+      { dir:'→ 직진 15m', landmark:'🎰 IC카드 개찰구 통과' },
+      { dir:'✅ 1번 플랫폼 도착!', landmark:'🚅 메이노하마 방면 탑승 준비' },
+    ],
+    mapName: '하카타역 역내 지도',
+    mapSub: '1번 플랫폼 → 7번 출구',
+    mapPlatform: '1번 플랫폼 · 공항선',
+    mapExit: '7',
+    facilities: ['🚻 화장실','🏧 ATM','☕ 카페','🛍️ 편의점','🛗 엘리베이터'],
+  },
+};
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+let currentCityId = 'tokyo';
+let currentStep   = 0;
+let obTimer       = null;
+let dark          = false;
+
+function city() { return cities[currentCityId]; }
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+window.addEventListener('load', () => {
+  renderAll();
+  const seen = sessionStorage.getItem('ob_done');
+  if (!seen) {
+    document.getElementById('onboardingOverlay').style.display = '';
+    obTimer = setTimeout(() => startOnboarding('now'), 5000);
+  } else {
+    document.getElementById('onboardingOverlay').style.display = 'none';
+  }
+});
+
+function renderAll() {
+  const c = city();
+  // hero
+  document.getElementById('heroEl').style.background = c.heroGrad;
+  document.getElementById('cityPillText').textContent = c.pill;
+  document.getElementById('heroHeadline').textContent = c.headline;
+  document.getElementById('heroSub').textContent = c.sub;
+  // card
+  document.getElementById('cardTypeName').textContent = c.cardName;
+  document.getElementById('alertModalSub').textContent = c.cardName + ' · 현재 잔액 ¥1,240';
+  // map label
+  document.getElementById('mapPlatformLabel').textContent = c.mapPlatform;
+  document.getElementById('mapExitLabel').textContent = c.mapExit;
+  // render lists
+  renderRouteList();
+  renderOfflineList();
+  renderStationList();
+  renderCityList();
+}
+
+/* ── Route List ── */
+function renderRouteList() {
+  const c = city();
+  document.getElementById('routeList').innerHTML = c.routes.map((r, i) => `
+    <div class="route-item" onclick="showRouteResult('${r.from}','${r.to}','${r.time}','${r.fare}','${r.line}','${r.platform}','${r.exit}','${r.exitSub}','${r.stops}')">
+      <div class="route-icon">🚇</div>
+      <div class="route-info">
+        <div class="route-path">${r.from}<span class="route-arrow">→</span>${r.to}</div>
+        <div class="route-meta">${r.line}<span class="route-meta-dot"></span>${r.stops}<span class="route-meta-dot"></span>${c.routeMeta[i]}</div>
+      </div>
+      <div class="route-fare">${r.fare}</div>
+    </div>`).join('');
+}
+
+/* ── Offline Map List ── */
+function renderOfflineList() {
+  const c = city();
+  const chips = c.maps.map(m => `
+    <div class="offline-chip" onclick="openMapModal('${m.name}')">
+      <div class="offline-chip-icon">${m.icon}</div>
+      <div class="offline-chip-name">${m.name}</div>
+      <div class="offline-chip-size">${m.size}</div>
+      <div class="offline-status ${m.saved ? 'saved' : 'missing'}">${m.saved ? '✓ 저장됨' : '↓ 저장 안됨'}</div>
+    </div>`).join('');
+  document.getElementById('offlineList').innerHTML = chips + `
+    <div class="offline-add-chip" onclick="alert('새 역 지도 추가')">
+      <div class="add-icon">＋</div>
+      <div class="add-text">역 추가</div>
+    </div>`;
+}
+
+/* ── Station List (route modal) ── */
+function renderStationList() {
+  const c = city();
+  document.getElementById('stationListTitle').textContent = `${c.name} 자주 가는 역`;
+  document.getElementById('stationList').innerHTML = c.stations.map(s => `
+    <div class="recent-station-item" onclick="selectDest('${s.name}')">
+      <div class="recent-station-icon">${s.icon}</div>
+      <div class="recent-station-name">${s.name}</div>
+      <div class="recent-station-line">${s.line}</div>
+    </div>`).join('');
+}
+
+/* ── City Selector List ── */
+function renderCityList() {
+  const items = Object.values(cities).map(c => `
+    <div class="city-item ${c.id === currentCityId ? 'active' : ''}" onclick="setCity('${c.id}')">
+      <div class="city-emoji">${c.flag}</div>
+      <div class="city-info">
+        <div class="city-name">${c.name}</div>
+        <div class="city-line-chips">
+          ${c.lines.map(l => `<span class="city-line-chip">${l}</span>`).join('')}
+        </div>
+        <div class="city-desc" style="margin-top:4px;">${c.sub}</div>
+      </div>
+      <div class="city-check">✓</div>
+    </div>`).join('');
+  document.getElementById('cityList').innerHTML = items;
+}
+
+/* ══════════════════════════════════════
+   CITY SWITCH
+══════════════════════════════════════ */
+function setCity(id) {
+  currentCityId = id;
+  closeCityModal();
+  renderAll();
+
+  // map 정보 갱신
+  const c = city();
+  document.getElementById('mapStationName').textContent = c.mapName;
+  document.getElementById('mapStationSub').textContent = c.mapSub;
+  document.getElementById('mapFacilityRow').innerHTML = c.facilities.map(f =>
+    `<div class="facility-chip">${f}</div>`).join('');
+
+  // step 초기화
+  currentStep = 0;
+  updateMapStep();
+}
+
+function openCityModal()  { renderCityList(); document.getElementById('cityModal').classList.add('open'); }
+function closeCityModal(e){ if (!e || e.target===document.getElementById('cityModal')) document.getElementById('cityModal').classList.remove('open'); }
+
+/* ══════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════ */
+function startOnboarding(type) {
+  clearTimeout(obTimer);
+  document.getElementById('onboardingOverlay').style.display = 'none';
+  sessionStorage.setItem('ob_done','1');
+  if (type === 'now') setTimeout(openRouteModal, 400);
+}
+
+/* ══════════════════════════════════════
+   DARK MODE
+══════════════════════════════════════ */
+function toggleDark() {
+  dark = !dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.getElementById('darkBtn').textContent = dark ? '☀️' : '🌙';
+}
+
+/* ══════════════════════════════════════
+   TALK CARD
+══════════════════════════════════════ */
+const cardData = {
+  gate: [
+    { kr:'IC카드 잔액이 부족해요', jp:'ICカードの残高が足りません。', read:'아이씨 카도노 잔다카가 타리마셍' },
+    { kr:'어느 개찰구로 나가야 하나요?', jp:'どちらの改札口から出ればいいですか？', read:'도치라노 카이사쓰구치카라 데레바 이이데스카?' },
+    { kr:'개찰구에서 카드가 인식 안 돼요', jp:'カードが改札で読み取れませんでした。', read:'카도가 카이사쓰데 요미토레마셍 데시타' },
+  ],
+  train: [
+    { kr:'잘못된 열차를 탔어요', jp:'違う電車に乗ってしまいました。', read:'치가우 덴샤니 놋테 시마이마시타' },
+    { kr:'이 열차는 ○○역에 정차하나요?', jp:'この電車は○○駅に止まりますか？', read:'코노 덴샤와 ○○에키니 토마리마스카?' },
+    { kr:'환승은 어느 플랫폼인가요?', jp:'乗り換えはどのホームですか？', read:'노리카에와 도노 호무데스카?' },
+  ],
+  location: [
+    { kr:'화장실은 어디에 있나요?', jp:'トイレはどこですか？', read:'토이레와 도코데스카?' },
+    { kr:'코인로커는 어디에 있나요?', jp:'コインロッカーはどこですか？', read:'코인롯카-와 도코데스카?' },
+    { kr:'관광안내소는 어디에 있나요?', jp:'観光案内所はどこですか？', read:'캉코안나이쇼와 도코데스카?' },
+  ],
+  lost: [
+    { kr:'분실물 센터는 어디에 있나요?', jp:'落し物センターはどこですか？', read:'오토시모노 센타-와 도코데스카?' },
+    { kr:'열차 안에 짐을 두고 내렸어요', jp:'電車の中に荷物を忘れました。', read:'덴샤노 나카니 니모쓰오 와스레마시타' },
+    { kr:'지갑을 잃어버렸어요', jp:'財布をなくしました。', read:'사이후오 나쿠시마시타' },
+  ],
+  pay: [
+    { kr:'어디서 충전할 수 있나요?', jp:'どこでチャージできますか？', read:'도코데 챠-지 데키마스카?' },
+    { kr:'환불은 어떻게 하나요?', jp:'払い戻しはどうすればいいですか？', read:'하라이모도시와 도우 스레바 이이데스카?' },
+    { kr:'현금으로 일회권을 사고 싶어요', jp:'現金で一回券を買いたいです。', read:'겐킨데 이치카이켄오 카이타이데스' },
+  ],
+};
+
+function openTalkModal() {
+  document.getElementById('talkModal').classList.add('open');
+  renderCards('gate');
+  showListView();
+  document.querySelectorAll('.cat-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+}
+function closeTalkModal(e) { if (!e || e.target===document.getElementById('talkModal')) document.getElementById('talkModal').classList.remove('open'); }
+function setCatTab(el, cat) { document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderCards(cat); }
+function renderCards(cat) {
+  document.getElementById('cardList').innerHTML = cardData[cat].map(c => `
+    <div class="talk-card" onclick="showCard(\`${c.jp}\`,\`${c.read}\`)">
+      <div class="talk-card-kr">${c.kr}</div>
+      <div class="talk-card-jp">${c.jp}</div>
+      <div class="talk-card-read">${c.read}</div>
+    </div>`).join('');
+}
+function showCard(jp, read) {
+  document.getElementById('cardJpText').textContent = jp;
+  document.getElementById('cardJpRead').textContent = read;
+  document.getElementById('talkListView').style.display = 'none';
+  document.getElementById('cardDisplay').classList.add('open');
+}
+function showListView() { document.getElementById('talkListView').style.display=''; document.getElementById('cardDisplay').classList.remove('open'); }
+function backToList() { showListView(); }
+
+/* ══════════════════════════════════════
+   ROUTE SEARCH
+══════════════════════════════════════ */
+function openRouteModal()  { document.getElementById('routeModal').classList.add('open'); }
+function closeRouteModal() { document.getElementById('routeModal').classList.remove('open'); }
+function swapSearch() {
+  const btn = document.querySelector('.search-swap-btn');
+  btn.style.transition='transform .3s'; btn.style.transform='translateY(-50%) rotate(180deg)';
+  setTimeout(()=>{ btn.style.transition=''; btn.style.transform='translateY(-50%)'; },300);
+}
+
+function selectDest(name) {
+  document.getElementById('routeDestText').textContent = name;
+  document.getElementById('routeDestText').classList.add('filled');
+  document.getElementById('destLabel').textContent = name;
+  closeRouteModal();
+  // 도시별 라우트 맞춰서 결과 표시
+  const c = city();
+  const match = c.routes.find(r => r.to === name.replace('역',''));
+  if (match) {
+    setTimeout(() => showRouteResult('현재 위치', match.to, match.time, match.fare, match.line, match.platform, match.exit, match.exitSub, match.stops), 300);
+  } else {
+    setTimeout(() => showRouteResult('현재 위치', name, '15분', '¥250', c.lines[0], '1번 플랫폼', '1번 출구', '목적지 방면', '3정거장 후 하차'), 300);
+  }
+}
+
+function showRouteResult(origin, dest, time, fare, line, platform, exit, exitSub, stops) {
+  document.getElementById('resOrigin').textContent = origin;
+  document.getElementById('resDest').textContent   = dest;
+  document.getElementById('resTime').textContent   = time;
+  document.getElementById('resFare').textContent   = fare;
+  document.getElementById('resLine').textContent   = line;
+  document.getElementById('resPlatform').textContent = platform;
+  document.getElementById('resExit').textContent   = exit;
+  document.getElementById('resExitSub').textContent = exitSub;
+  document.getElementById('resStops').textContent  = stops;
+  document.getElementById('resultModal').classList.add('open');
+}
+function closeResultModal(e) { if (!e || e.target===document.getElementById('resultModal')) document.getElementById('resultModal').classList.remove('open'); }
+
+/* ══════════════════════════════════════
+   INDOOR MAP
+══════════════════════════════════════ */
+function openMapModal(stationName) {
+  const c = city();
+  currentStep = 0;
+  if (stationName) {
+    document.getElementById('mapStationName').textContent = stationName + ' 역내 지도';
+  } else {
+    document.getElementById('mapStationName').textContent = c.mapName;
+  }
+  document.getElementById('mapStationSub').textContent = c.mapSub;
+  document.getElementById('mapPlatformLabel').textContent = c.mapPlatform;
+  document.getElementById('mapExitLabel').textContent = c.mapExit;
+  document.getElementById('mapFacilityRow').innerHTML = c.facilities.map(f=>`<div class="facility-chip">${f}</div>`).join('');
+  updateMapStep();
+  document.getElementById('mapModal').classList.add('open');
+}
+function closeMapModal() { document.getElementById('mapModal').classList.remove('open'); }
+
+function updateMapStep() {
+  const steps = city().mapSteps;
+  const s = steps[currentStep];
+  document.getElementById('stepDirection').textContent = s.dir;
+  document.getElementById('stepLandmark').textContent  = s.landmark;
+  document.getElementById('stepNumEl').textContent     = currentStep + 1;
+  document.getElementById('stepTotalEl').textContent   = `${currentStep+1} / ${steps.length}`;
+  document.getElementById('stepNumEl').className = 'map-step-num' + (currentStep===steps.length-1?' done':'');
+
+  document.getElementById('stepProgress').innerHTML = steps.map((_,i) =>
+    `<div class="map-prog-dot ${i<currentStep?'done':i===currentStep?'current':''}"></div>`).join('');
+
+  const btn = document.getElementById('nextStepBtn');
+  if (currentStep === steps.length - 1) {
+    btn.textContent = '길안내 완료 ✓';
+    btn.style.background = 'linear-gradient(135deg,#34C759,#30D158)';
+  } else {
+    btn.textContent = '다음 단계 →';
+    btn.style.background = 'linear-gradient(135deg,var(--accent),#6B8AFF)';
+  }
+}
+function nextStep() {
+  const steps = city().mapSteps;
+  if (currentStep < steps.length-1) { currentStep++; updateMapStep(); }
+  else { alert('🎉 목적지에 도착했어요!\n\n플랫폼에서 열차에 탑승하세요.'); closeMapModal(); }
+}
+function prevStep() { if (currentStep>0) { currentStep--; updateMapStep(); } }
+
+/* ══════════════════════════════════════
+   ATM
+══════════════════════════════════════ */
+function showAtmInfo() { alert(city().atmInfo); }
+
+/* ══════════════════════════════════════
+   ALERT SETTINGS
+══════════════════════════════════════ */
+function openAlertSettings()  { document.getElementById('alertModal').classList.add('open'); }
+function closeAlertSettings(e){ if (!e || e.target===document.getElementById('alertModal')) document.getElementById('alertModal').classList.remove('open'); }
+function setThreshold(el)     { document.querySelectorAll('.threshold-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+function toggleSwitch(id)     { document.getElementById(id).classList.toggle('on'); }
+function saveAlertSettings()  { closeAlertSettings(); setTimeout(()=>alert('✅ 알림 설정이 저장되었어요!\n\n잔액이 기준치 이하로 내려가면 즉시 알려드릴게요.'),200); }
+</script>
+</body>
+</html>

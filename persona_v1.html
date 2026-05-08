@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>에키 — 퍼소나 카드 v1</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background: #F4F5F7;
+      min-height: 100vh;
+      padding: 48px 24px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .service-badge {
+      display: inline-block;
+      background: #1C1C1E;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1C1C1E;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #8E8E93;
+      margin-top: 6px;
+    }
+
+    .cards-wrapper {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ── 카드 ── */
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      width: 520px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 상단 헤더 */
+    .card-header {
+      padding: 28px 28px 20px;
+      position: relative;
+    }
+
+    .card--primary .card-header { background: #1C1C1E; }
+    .card--secondary .card-header { background: #2C3E6B; }
+
+    .persona-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 10px;
+    }
+
+    .persona-name {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .persona-meta {
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      margin-top: 4px;
+    }
+
+    .tech-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 5px 12px;
+    }
+
+    .tech-dots {
+      display: flex;
+      gap: 3px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dot.filled { background: #fff; }
+    .dot.empty  { background: rgba(255,255,255,0.25); }
+
+    .tech-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .travel-tag {
+      position: absolute;
+      top: 28px;
+      right: 28px;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.85);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    /* 맥락 */
+    .context-bar {
+      padding: 14px 28px;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #3A3A3C;
+    }
+
+    .card--primary  .context-bar { background: #F2F2F7; }
+    .card--secondary .context-bar { background: #EEF1F8; }
+
+    .context-bar strong {
+      font-weight: 700;
+      color: #1C1C1E;
+    }
+
+    /* 카드 바디 */
+    .card-body {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      flex: 1;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #AEAEB2;
+      margin-bottom: 10px;
+    }
+
+    /* 목표 */
+    .goal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .goal-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #F9F9FB;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .goal-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #fff;
+    }
+
+    .card--primary  .goal-num { background: #1C1C1E; }
+    .card--secondary .goal-num { background: #2C3E6B; }
+
+    .goal-text {
+      font-size: 13px;
+      color: #3A3A3C;
+      line-height: 1.6;
+    }
+
+    /* 페인포인트 */
+    .pain-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .pain-item {
+      border-left: 3px solid #FF3B30;
+      padding: 10px 12px;
+      background: #FFF5F5;
+      border-radius: 0 10px 10px 0;
+    }
+
+    .pain-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1C1C1E;
+      margin-bottom: 4px;
+    }
+
+    .pain-desc {
+      font-size: 12px;
+      color: #636366;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .evidence-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .evidence {
+      font-size: 11px;
+      color: #8E8E93;
+      line-height: 1.5;
+      padding-left: 10px;
+      border-left: 2px solid #FFCDD2;
+      font-style: italic;
+    }
+
+    .evidence strong {
+      color: #FF3B30;
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    /* 결정적 한 마디 */
+    .quote-block {
+      border-radius: 14px;
+      padding: 18px 20px;
+      position: relative;
+    }
+
+    .card--primary  .quote-block { background: #1C1C1E; }
+    .card--secondary .quote-block { background: #2C3E6B; }
+
+    .quote-mark {
+      font-size: 40px;
+      line-height: 1;
+      color: rgba(255,255,255,0.2);
+      font-family: Georgia, serif;
+      position: absolute;
+      top: 10px;
+      left: 16px;
+    }
+
+    .quote-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.75;
+      padding-left: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 행동 패턴 */
+    .behavior-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .behavior-item {
+      background: #F2F2F7;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .behavior-situation {
+      font-size: 10px;
+      font-weight: 700;
+      color: #AEAEB2;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .behavior-action {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1C1C1E;
+      margin-bottom: 3px;
+    }
+
+    .behavior-limit {
+      font-size: 11px;
+      color: #FF3B30;
+    }
+
+    /* 전략 연결 */
+    .strategy-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .strategy-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1.5px solid;
+    }
+
+    .card--primary  .strategy-tag { border-color: #1C1C1E; color: #1C1C1E; }
+    .card--secondary .strategy-tag { border-color: #2C3E6B; color: #2C3E6B; }
+
+    /* 구분선 */
+    .divider {
+      height: 1px;
+      background: #F2F2F7;
+      margin: 0 28px;
+    }
+
+    /* 반응형 */
+    @media (max-width: 700px) {
+      .card { width: 100%; }
+      .behavior-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="service-badge">에키 · EEKI</div>
+    <h1 class="page-title">퍼소나 카드</h1>
+    <p class="page-subtitle">어피니티 다이어그램 인터뷰 데이터 기반 · 2026.04</p>
+  </header>
+
+  <div class="cards-wrapper">
+
+    <!-- ══════════════════════════════
+         PERSONA 1 — 박서연
+    ══════════════════════════════ -->
+    <div class="card card--primary">
+
+      <div class="card-header">
+        <div class="persona-label">PRIMARY PERSONA</div>
+        <div class="travel-tag">✈ 도쿄</div>
+        <div class="persona-name">박서연</div>
+        <div class="persona-meta">27세 · 콘텐츠 마케터 · 서울 마포구 1인가구</div>
+        <div class="persona-meta" style="margin-top:2px;">연 1~2회 일본 여행 · 친구 1~2명 동행</div>
+        <div class="tech-badge">
+          <div class="tech-dots">
+            <div class="dot filled"></div>
+            <div class="dot filled"></div>
+            <div class="dot filled"></div>
+            <div class="dot filled"></div>
+            <div class="dot empty"></div>
+          </div>
+          <span class="tech-label">기술 친숙도 4/5 — 낯선 외국 앱 설치는 꺼림</span>
+        </div>
+      </div>
+
+      <div class="context-bar">
+        <strong>상황</strong> · 도쿄 3박 4일 2일차. 신주쿠 역 도착 후 목적지 출구를 찾지 못함.
+        표지판은 일본어뿐, 뒤에는 줄이 쌓이고 친구들은 기다린다.
+        결국 옆 사람 따라서 탔다.
+      </div>
+
+      <div class="card-body">
+
+        <!-- 목표 -->
+        <div>
+          <div class="section-title">TARGET GOALS</div>
+          <div class="goal-list">
+            <div class="goal-item">
+              <div class="goal-num">1</div>
+              <div class="goal-text">"틀릴까봐"라는 불안 없이, 출발 전에 어느 출구·어느 열차인지 알고 역에 들어가고 싶다</div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-num">2</div>
+              <div class="goal-text">교통카드 충전·잔액 걱정 없이 결제 문제로 여행 흐름이 끊기지 않게 하고 싶다</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 페인포인트 -->
+        <div>
+          <div class="section-title">PAIN POINTS</div>
+          <div class="pain-list">
+            <div class="pain-item">
+              <div class="pain-title">① 역사 안에 들어서는 순간, 앱이 쓸모없어진다</div>
+              <div class="pain-desc">출구가 수십 개인데 구글맵은 아무것도 말해주지 않는다. 안내판이 많을수록 오히려 더 헷갈린다.</div>
+              <div class="evidence-list">
+                <div class="evidence"><strong>U6</strong> "역 내가 커서 수많은 안내 위치와 포스터로 인해(정보 과다) 헷갈림"</div>
+                <div class="evidence"><strong>U8</strong> "신주쿠 역같은 경우 다수의 출구로 인해 위치 찾기가 어려움"</div>
+                <div class="evidence"><strong>U4</strong> "같은 라인이지만 다른 지하철을 탑승한 적이 있다"</div>
+              </div>
+            </div>
+            <div class="pain-item">
+              <div class="pain-title">② 도움 요청 자체가 스트레스다</div>
+              <div class="pain-desc">번역 앱 타이핑 중 뒤에 줄이 쌓인다. 역무원은 보려 하지 않는다. 결국 "포기"가 된다.</div>
+              <div class="evidence-list">
+                <div class="evidence"><strong>U6</strong> "오래 번역 시에 눈치 보이고, 줄에 대한 부담감이 생김"</div>
+                <div class="evidence"><strong>U6</strong> "역무원과의 번역 의지 부족으로 의사소통이 안 돼서 불편함"</div>
+                <div class="evidence"><strong>U7</strong> "심리적 압박이 커서 길치 현상이 심화됨"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 결정적 한 마디 -->
+        <div>
+          <div class="section-title">KEY QUOTE</div>
+          <div class="quote-block">
+            <div class="quote-mark">"</div>
+            <div class="quote-text">구글맵 믿고 들어갔다가 역 안에서 멘붕 옴. 경로는 알겠는데 막상 역에 서면 아무것도 모르겠어. 그냥 나만 아는 게 없는 것 같아서 더 불안해.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 행동 패턴 -->
+        <div>
+          <div class="section-title">CURRENT BEHAVIOR</div>
+          <div class="behavior-grid">
+            <div class="behavior-item">
+              <div class="behavior-situation">경로 탐색</div>
+              <div class="behavior-action">구글맵 기본 사용</div>
+              <div class="behavior-limit">역 내부·출구 정보 없음</div>
+            </div>
+            <div class="behavior-item">
+              <div class="behavior-situation">헷갈릴 때</div>
+              <div class="behavior-action">네이버 블로그·유튜브 사전 검색</div>
+              <div class="behavior-limit">현장 실시간 대응 불가</div>
+            </div>
+            <div class="behavior-item">
+              <div class="behavior-situation">소통 필요 시</div>
+              <div class="behavior-action">파파고 번역 후 보여주기</div>
+              <div class="behavior-limit">타이핑 시간 + 심리적 부담</div>
+            </div>
+            <div class="behavior-item">
+              <div class="behavior-situation">교통카드</div>
+              <div class="behavior-action">트래블월렛 또는 Suica</div>
+              <div class="behavior-limit">잔액 확인 못해 ATM 헤맴</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 전략 연결 -->
+        <div>
+          <div class="section-title">STRATEGY CONNECTION</div>
+          <div class="strategy-tags">
+            <span class="strategy-tag">전략 1 · 타겟 독점</span>
+            <span class="strategy-tag">전략 2 · 여정 확장 (역사 내비)</span>
+            <span class="strategy-tag">전략 3 · 불안 제거 (언어 카드)</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════
+         PERSONA 2 — 최민준
+    ══════════════════════════════ -->
+    <div class="card card--secondary">
+
+      <div class="card-header">
+        <div class="persona-label">SECONDARY PERSONA</div>
+        <div class="travel-tag">⛴ 후쿠오카</div>
+        <div class="persona-name">최민준</div>
+        <div class="persona-meta">23세 · 부산대학교 4학년 (경영학) · 부산 해운대구</div>
+        <div class="persona-meta" style="margin-top:2px;">연 3~4회 후쿠오카 단기 여행 · 친구 2~3명 동행</div>
+        <div class="tech-badge">
+          <div class="tech-dots">
+            <div class="dot filled"></div>
+            <div class="dot filled"></div>
+            <div class="dot filled"></div>
+            <div class="dot empty"></div>
+            <div class="dot empty"></div>
+          </div>
+          <span class="tech-label">기술 친숙도 3/5 — 여행 전 앱 세팅·준비 귀찮아함</span>
+        </div>
+      </div>
+
+      <div class="context-bar">
+        <strong>상황</strong> · 금요일 저녁 출발, 일요일 귀국하는 2박 3일. "이제 알겠지" 했는데
+        하카타 역에서 또 헷갈린다. 한 번 헤매면 일정의 20%가 날아가는 느낌.
+      </div>
+
+      <div class="card-body">
+
+        <!-- 목표 -->
+        <div>
+          <div class="section-title">TARGET GOALS</div>
+          <div class="goal-list">
+            <div class="goal-item">
+              <div class="goal-num">1</div>
+              <div class="goal-text">준비 없이 도착해도 후쿠오카 지하철을 바로 탈 수 있게 — 앱 하나로 즉시 해결하고 싶다</div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-num">2</div>
+              <div class="goal-text">짧은 여행에서 이동 시간 낭비 없이 먹고 싶은 것, 가고 싶은 곳을 최대한 소화하고 싶다</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 페인포인트 -->
+        <div>
+          <div class="section-title">PAIN POINTS</div>
+          <div class="pain-list">
+            <div class="pain-item">
+              <div class="pain-title">① "이 정도는 알겠지" 했는데 또 헷갈린다</div>
+              <div class="pain-desc">자주 가니까 준비를 안 하게 되고, 교통카드 잔액 부족으로 개찰구에서 막히는 상황이 매번 반복된다.</div>
+              <div class="evidence-list">
+                <div class="evidence"><strong>U6</strong> "교통카드 잔액 표시가 안 되어서 그냥 찍었다가 잔액부족으로 뜸"</div>
+                <div class="evidence"><strong>U3</strong> "교통 카드 충전할 수 있는 ATM기 찾기가 어려웠음"</div>
+                <div class="evidence"><strong>U8</strong> "충전할 수 있는 ATM기가 한정적"</div>
+              </div>
+            </div>
+            <div class="pain-item">
+              <div class="pain-title">② 여행 중 문제가 생기면 해결 방법이 없다</div>
+              <div class="pain-desc">짧은 여행이라 천천히 해결할 여유가 없다. 확신 없이 친구들한테 계속 물어보다 분위기가 어색해진다.</div>
+              <div class="evidence-list">
+                <div class="evidence"><strong>U9</strong> "구글 맵에 의존하면서도 실제 진행 방향이 맞는지 확인할 수 없어 막막함과 불안함을 느낌"</div>
+                <div class="evidence"><strong>U10</strong> "역무원과 대화가 잘 안 통함"</div>
+                <div class="evidence"><strong>U4</strong> "번역 어플에 타자 치는 시간이 오래 걸림"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 결정적 한 마디 -->
+        <div>
+          <div class="section-title">KEY QUOTE</div>
+          <div class="quote-block">
+            <div class="quote-mark">"</div>
+            <div class="quote-text">후쿠오카 네 번 갔는데 매번 같은 데서 헷갈려. 익숙한 것 같은데 막상 가면 또 모르겠음. 그냥 켜면 바로 알려주는 앱 하나 있었으면 진짜 좋겠다.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 행동 패턴 -->
+        <div>
+          <div class="section-title">CURRENT BEHAVIOR</div>
+          <div class="behavior-grid">
+            <div class="behavior-item">
+              <div class="behavior-situation">여행 전 준비</div>
+              <div class="behavior-action">유튜브 브이로그 1~2편</div>
+              <div class="behavior-limit">현장과 다르면 대처 불가</div>
+            </div>
+            <div class="behavior-item">
+              <div class="behavior-situation">경로 탐색</div>
+              <div class="behavior-action">구글맵 + 감</div>
+              <div class="behavior-limit">JR·지하철 구분 여전히 혼란</div>
+            </div>
+            <div class="behavior-item">
+              <div class="behavior-situation">교통카드</div>
+              <div class="behavior-action">매번 현금 일회권 구매</div>
+              <div class="behavior-limit">창구 줄 + 요금 계산 번거로움</div>
+            </div>
+            <div class="behavior-item">
+              <div class="behavior-situation">막혔을 때</div>
+              <div class="behavior-action">제일 잘 아는 친구한테 의존</div>
+              <div class="behavior-limit">그 친구도 사실 잘 모름</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 전략 연결 -->
+        <div>
+          <div class="section-title">STRATEGY CONNECTION</div>
+          <div class="strategy-tags">
+            <span class="strategy-tag">전략 1 · 타겟 독점</span>
+            <span class="strategy-tag">전략 3 · 불안 제거 (잔액 경보)</span>
+            <span class="strategy-tag">즉시 실행 온보딩</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
